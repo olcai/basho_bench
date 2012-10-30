@@ -114,20 +114,24 @@ main(Configs) ->
 wait_for_stop(Mref, infinity) ->
     receive
         {'DOWN', Mref, _, _, Info} ->
+            filetable_server:save(),
             ?CONSOLE("Test stopped: ~p\n", [Info])
     end;
 wait_for_stop(Mref, DurationMins) ->
     Duration = timer:minutes(DurationMins) + timer:seconds(1),
     receive
         {'DOWN', Mref, _, _, Info} ->
+            filetable_server:save(),
             ?CONSOLE("Test stopped: ~p\n", [Info]);
         {shutdown, Reason, Exit} ->
             basho_bench_app:stop(),
+            filetable_server:save(),
             ?CONSOLE("Test shutdown: ~s~n", [Reason]),
             halt(Exit)
 
     after Duration ->
             basho_bench_app:stop(),
+            filetable_server:save(),
             ?CONSOLE("Test completed after ~p mins.\n", [DurationMins])
     end.
 
