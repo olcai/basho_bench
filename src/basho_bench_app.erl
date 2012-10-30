@@ -50,6 +50,7 @@ start() ->
     application:start(basho_bench, permanent).
 
 stop() ->
+    filetable_server:save(),
     application:stop(basho_bench).
 
 is_running() ->
@@ -70,7 +71,6 @@ start(_StartType, _StartArgs) ->
 
 
 stop(_State) ->
-    filetable_server:save(),
     ok.
 
 %% ===================================================================
