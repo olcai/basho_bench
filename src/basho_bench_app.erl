@@ -70,6 +70,7 @@ start(_StartType, _StartArgs) ->
 
 
 stop(_State) ->
+    filetable_server:save(),
     ok.
 
 %% ===================================================================
