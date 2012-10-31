@@ -88,9 +88,8 @@ run(get, _KeyGen, _ValueGen, #state{fsalstate=FS, id=Id}=State) ->
     case filetable_server:get_next_read() of
         none ->
             {stop, no_more_files_to_get};
-        {file, Prefix, RelPath, FileName, _Size, true} ->
-            Path = filename_join([Prefix, RelPath]),
-            case fsal:get(Path, FileName, FS) of
+        {file, _Prefix, RelPath, FileName, _Size, true} ->
+            case fsal:get(RelPath, FileName, FS) of
                 {ok, {file, Data}, NewFS} ->
                     TimeDiff = timer:now_diff(os:timestamp(), TimeStart),
                     ?DEBUG("get size ~p took ~p (~p)",
@@ -147,9 +146,8 @@ run(delete, _KeyGen, _ValueGen, #state{fsalstate=FS, id=Id}=State) ->
     case filetable_server:get_next_read() of
         none ->
             {stop, no_more_files_to_delete};
-        {file, Prefix, RelPath, FileName, Size, _WriteFlag} ->
-            Path = filename_join([Prefix, RelPath]),
-            case fsal:delete(Path, FileName, FS) of
+        {file, _Prefix, RelPath, FileName, Size, _WriteFlag} ->
+            case fsal:delete(RelPath, FileName, FS) of
                 {ok, ok, NewFS} ->
                     TimeDiff = timer:now_diff(os:timestamp(), TimeStart),
                     ?DEBUG("delete of size ~p took ~p (~p)",
