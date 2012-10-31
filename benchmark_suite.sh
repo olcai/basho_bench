@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Duration is only used for micro benchmark
-DURATION=1
+DURATION=5
 BACKEND=file
 CONCURRENT=( 1 2 5 10 20 50 )
 # Val_size is only used for micro benchmark
-VAL_SIZE=( 1 1000 1000000 16000000 100000000 )
+VAL_SIZE=( 1 1000 100000 1000000 16000000 100000000 )
 # The number of seconds between benchmark runs
 SLEEP_BETWEEN=5
 # Set SUITE to macro or micro to run it
