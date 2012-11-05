@@ -54,7 +54,7 @@ function run-bench-cycle {
     fi
     TABLE=$(readlink -f tests/current)/my_filetable
     echo $TABLE
-    run-bench $1 $2 $3 "get" $TABLE $4
+    run-bench $1 $2 $3 "get_ignore_body" $TABLE $4
     echo $TABLE
     run-bench $1 $2 $3 "delete" $TABLE $4
     # Should we check result here?

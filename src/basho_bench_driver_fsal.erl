@@ -99,6 +99,27 @@ run(get, _KeyGen, _ValueGen, #state{fsalstate=FS, id=Id}=State) ->
                     {error,{Error},State#state{fsalstate=NewFS}}
             end
     end;
+run(get_ignore_body,
+    _KeyGen,
+    _ValueGen,
+    #state{fsalstate=FS, id=Id}=State) ->
+    %% DANGER WILL ROBINSON! Will only work properly if all files in
+    %% filetable_server have been putted before calling this function.
+    TimeStart = os:timestamp(),
+    case filetable_server:get_next_read() of
+        none ->
+            {stop, no_more_files_to_get};
+        {file, _Prefix, RelPath, FileName, _Size, true} ->
+            case fsal:get_ignore_body(RelPath, FileName, FS) of
+                {ok, {file, Size}, NewFS} ->
+                    TimeDiff = timer:now_diff(os:timestamp(), TimeStart),
+                    ?DEBUG("get_ignore_body size ~p took ~p (~p)",
+                           [Size, TimeDiff, Id]),
+                    {ok, State#state{fsalstate=NewFS}};
+                {ok, Error, NewFS} ->
+                    {error,{Error},State#state{fsalstate=NewFS}}
+            end
+    end;
 run(put, _KeyGen, ValueGen, #state{fsalstate=FS, id=Id}=State) ->
     %% The put operation is used when writing file contents directly
     %% (i.e. micro-benchmarks)
