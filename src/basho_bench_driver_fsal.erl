@@ -89,7 +89,7 @@ run(get, _KeyGen, _ValueGen, #state{fsalstate=FS, id=Id}=State) ->
         none ->
             {stop, no_more_files_to_get};
         {file, _Prefix, RelPath, FileName, _Size, true} ->
-            case fsal:get(RelPath, FileName, FS) of
+            try fsal:get(RelPath, FileName, FS) of
                 {ok, {file, Data}, NewFS} ->
                     TimeDiff = timer:now_diff(os:timestamp(), TimeStart),
                     ?DEBUG("get size ~p took ~p (~p)",
@@ -97,6 +97,11 @@ run(get, _KeyGen, _ValueGen, #state{fsalstate=FS, id=Id}=State) ->
                     {ok, State#state{fsalstate=NewFS}};
                 {ok, Error, NewFS} ->
                     {error,{Error},State#state{fsalstate=NewFS}}
+            catch
+                error:Error ->
+                    {error,
+                     {fsal_error, Error, erlang:get_stacktrace()},
+                     State}
             end
     end;
 run(get_ignore_body,
@@ -110,7 +115,7 @@ run(get_ignore_body,
         none ->
             {stop, no_more_files_to_get};
         {file, _Prefix, RelPath, FileName, _Size, true} ->
-            case fsal:get_ignore_body(RelPath, FileName, FS) of
+            try fsal:get_ignore_body(RelPath, FileName, FS) of
                 {ok, {file, Size}, NewFS} ->
                     TimeDiff = timer:now_diff(os:timestamp(), TimeStart),
                     ?DEBUG("get_ignore_body size ~p took ~p (~p)",
@@ -118,6 +123,11 @@ run(get_ignore_body,
                     {ok, State#state{fsalstate=NewFS}};
                 {ok, Error, NewFS} ->
                     {error,{Error},State#state{fsalstate=NewFS}}
+            catch
+                error:Error ->
+                    {error,
+                     {fsal_error, Error, erlang:get_stacktrace()},
+                     State}
             end
     end;
 run(put, _KeyGen, ValueGen, #state{fsalstate=FS, id=Id}=State) ->
@@ -126,7 +136,7 @@ run(put, _KeyGen, ValueGen, #state{fsalstate=FS, id=Id}=State) ->
     TimeStart = os:timestamp(),
     {RelPath, FileName} = get_random_path(),
     Data = ValueGen(),
-    case fsal:put(RelPath, FileName, Data, FS) of
+    try fsal:put(RelPath, FileName, Data, FS) of
         {ok, ok, NewFS} ->
             TimeDiff = timer:now_diff(os:timestamp(),
                                       TimeStart),
@@ -140,6 +150,9 @@ run(put, _KeyGen, ValueGen, #state{fsalstate=FS, id=Id}=State) ->
             {ok, State#state{fsalstate=NewFS}};
         {ok, Error, NewFS} ->
             {error,{Error},State#state{fsalstate=NewFS}}
+    catch
+        error:Error ->
+            {error, {fsal_error, Error, erlang:get_stacktrace()}, State}
     end;
 run(put_direct, _KeyGen, _ValueGen, #state{fsalstate=FS, id=Id}=State) ->
     %% The put_direct operation is used to copy a source file to the
@@ -150,7 +163,7 @@ run(put_direct, _KeyGen, _ValueGen, #state{fsalstate=FS, id=Id}=State) ->
             {stop, no_more_files_to_put};
         {file, Prefix, RelPath, FileName, Size, _WriteFlag} ->
             SourceFile = filename_join([Prefix, RelPath, FileName]),
-            case fsal:put_direct(RelPath, FileName, SourceFile, FS) of
+            try fsal:put_direct(RelPath, FileName, SourceFile, FS) of
                 {ok, ok, NewFS} ->
                     TimeDiff = timer:now_diff(os:timestamp(), TimeStart),
                     ?DEBUG("put_direct size ~p took ~p (~p)",
@@ -158,6 +171,11 @@ run(put_direct, _KeyGen, _ValueGen, #state{fsalstate=FS, id=Id}=State) ->
                     {ok, State#state{fsalstate=NewFS}};
                 {ok, Error, NewFS} ->
                     {error,{Error},State#state{fsalstate=NewFS}}
+            catch
+                error:Error ->
+                    {error,
+                     {fsal_error, Error, erlang:get_stacktrace()},
+                     State}
             end
     end;
 run(delete, _KeyGen, _ValueGen, #state{fsalstate=FS, id=Id}=State) ->
@@ -168,7 +186,7 @@ run(delete, _KeyGen, _ValueGen, #state{fsalstate=FS, id=Id}=State) ->
         none ->
             {stop, no_more_files_to_delete};
         {file, _Prefix, RelPath, FileName, Size, _WriteFlag} ->
-            case fsal:delete(RelPath, FileName, FS) of
+            try fsal:delete(RelPath, FileName, FS) of
                 {ok, ok, NewFS} ->
                     TimeDiff = timer:now_diff(os:timestamp(), TimeStart),
                     ?DEBUG("delete of size ~p took ~p (~p)",
@@ -176,6 +194,11 @@ run(delete, _KeyGen, _ValueGen, #state{fsalstate=FS, id=Id}=State) ->
                     {ok, State#state{fsalstate=NewFS}};
                 {ok, Error, NewFS} ->
                     {error,{Error},State#state{fsalstate=NewFS}}
+            catch
+                error:Error ->
+                    {error,
+                     {fsal_error, Error, erlang:get_stacktrace()},
+                     State}
             end
     end.
 
