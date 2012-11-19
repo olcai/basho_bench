@@ -31,6 +31,9 @@
 %% Application callbacks
 -export([start/2, stop/1]).
 
+%% Dummy export
+-export([monitor_loop/1]).
+
 
 %% ===================================================================
 %% API
@@ -41,6 +44,9 @@ start() ->
     application:load(sasl),
     application:set_env(sasl, sasl_error_logger, false),
     ok = application:start(sasl),
+    %% Start the OS monitor (disable memory monitor)
+    ok = application:set_env(os_mon, start_memsup, false),
+    ok = application:start(os_mon),
 
     %% Make sure crypto is available
     ok = application:start(crypto),
@@ -67,6 +73,7 @@ start(_StartType, _StartArgs) ->
     ok = basho_bench_stats:run(),
     ok = basho_bench_measurement:run(),
     ok = basho_bench_worker:run(basho_bench_sup:workers()),
+    monitor_load(),
     {ok, Pid}.
 
 
@@ -76,3 +83,20 @@ stop(_State) ->
 %% ===================================================================
 %% Internal functions
 %% ===================================================================
+
+%% OS Monitor
+monitor_load() ->
+    %% Read the first value since it is regarded as garbage
+    cpu_sup:util([detailed]),
+    _Pid = spawn(?MODULE, monitor_loop, [5000]).
+
+monitor_loop(Interval) ->
+    receive
+        stop ->
+            ok
+    after
+        Interval ->
+            Util = cpu_sup:util([detailed]),
+            lager:info("CPU Usage: ~p", [Util]),
+            monitor_loop(Interval)
+    end.
